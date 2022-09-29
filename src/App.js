@@ -30,8 +30,9 @@ const tagsList = [
 ]
 
 const TagItem = props => {
-  const {tagDetails, filterItem} = props
+  const {tagDetails, filterItem, isActive} = props
   const {displayText, optionId} = tagDetails
+  const activeBtn = isActive ? 'active-btn' : 'tag-button'
 
   const onClickSelect = () => {
     filterItem(optionId)
@@ -39,7 +40,7 @@ const TagItem = props => {
 
   return (
     <li className="each-tag">
-      <button type="button" className="tag-button" onClick={onClickSelect}>
+      <button type="button" className={activeBtn} onClick={onClickSelect}>
         {displayText}
       </button>
     </li>
@@ -47,7 +48,13 @@ const TagItem = props => {
 }
 
 class App extends Component {
-  state = {activeId: tagsList[0].optionId, inputText: '', tagList: []}
+  state = {
+    activeId: tagsList[0].optionId,
+    inputText: '',
+    tagList: [],
+    filterId: '',
+    filterListData: [],
+  }
 
   onChangeOptionId = event => {
     this.setState({activeId: event.target.value})
@@ -57,11 +64,17 @@ class App extends Component {
     this.setState({inputText: event.target.value})
   }
 
-  filterItem = optionId => {
-    const {tagList} = this.state
-    const filterList = tagList.filter(tagPart => tagPart.optionId === optionId)
+  filterItem = id => {
+    const {tagList, filterId} = this.state
+    const filterList = tagList.filter(tagData => tagData.optionId === id)
     console.log(filterList)
-    this.setState({tagList: filterList})
+    this.setState({filterListData: filterList})
+
+    if (filterId !== id) {
+      this.setState({filterId: id})
+    } else {
+      this.setState({filterId: ''})
+    }
   }
 
   onSubmitDetails = event => {
@@ -72,6 +85,7 @@ class App extends Component {
       id: uuidV4(),
       taskTitle: inputText,
       tagName: findTag.displayText,
+      optionId: findTag.optionId,
     }
     this.setState(prevState => ({
       tagList: [...prevState.tagList, newTask],
@@ -80,49 +94,57 @@ class App extends Component {
     }))
   }
 
-  onRenderDisplayAllTags = tagList => (
-    <ul className="all-tags-list">
-      {tagList.map(eachTag => (
-        <li className="each-tag-details" key={eachTag.id}>
-          <p className="tag-title">{eachTag.taskTitle}</p>
-          <button type="button" className="tag-btn">
-            {eachTag.tagName}
-          </button>
-        </li>
-      ))}
-    </ul>
-  )
+  onRenderDisplayAllTags = () => {
+    const {tagList, filterListData, filterId} = this.state
+    const displayList = filterId !== '' ? filterListData : tagList
+
+    return (
+      <ul className="all-tags-list">
+        {displayList.map(eachTag => (
+          <li className="each-tag-details" key={eachTag.id}>
+            <p className="tag-title">{eachTag.taskTitle}</p>
+            <p className="tag-btn">{eachTag.tagName}</p>
+          </li>
+        ))}
+      </ul>
+    )
+  }
 
   noTagsDisplay = () => (
     <div className="no-tags-container">
-      <h1 className="tasks-heading">No Tasks Added Yet</h1>
+      <p className="tasks-heading">No Tasks Added Yet</p>
     </div>
   )
 
   onDisplayTags = () => {
     const {tagList} = this.state
     if (tagList.length > 0) {
-      return this.onRenderDisplayAllTags(tagList)
+      return this.onRenderDisplayAllTags()
     }
     return this.noTagsDisplay()
   }
 
-  onDisplayResultDetails = () => (
-    <div className="results-bg-container">
-      <h1 className="tags-heading">Tags</h1>
-      <ul className="all-button">
-        {tagsList.map(item => (
-          <TagItem
-            tagDetails={item}
-            key={item.optionId}
-            filterItem={this.filterItem}
-          />
-        ))}
-      </ul>
-      <h1 className="tasks-heading">Tasks</h1>
-      {this.onDisplayTags()}
-    </div>
-  )
+  onDisplayResultDetails = () => {
+    const {filterId} = this.state
+
+    return (
+      <div className="results-bg-container">
+        <h1 className="tags-heading">Tags</h1>
+        <ul className="all-button">
+          {tagsList.map(item => (
+            <TagItem
+              tagDetails={item}
+              key={item.optionId}
+              filterItem={this.filterItem}
+              isActive={filterId === item.optionId}
+            />
+          ))}
+        </ul>
+        <h1 className="tasks-heading">Tasks</h1>
+        {this.onDisplayTags()}
+      </div>
+    )
+  }
 
   render() {
     const {activeId, inputText} = this.state

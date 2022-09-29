@@ -1,5 +1,5 @@
 import {Component} from 'react'
-
+import {v4 as uuidV4} from 'uuid'
 import './App.css'
 
 const tagsList = [
@@ -30,12 +30,16 @@ const tagsList = [
 ]
 
 const TagItem = props => {
-  const {tagDetails} = props
-  const {displayText} = tagDetails
+  const {tagDetails, filterItem} = props
+  const {displayText, optionId} = tagDetails
+
+  const onClickSelect = () => {
+    filterItem(optionId)
+  }
 
   return (
     <li className="each-tag">
-      <button type="button" className="tag-button">
+      <button type="button" className="tag-button" onClick={onClickSelect}>
         {displayText}
       </button>
     </li>
@@ -53,11 +57,19 @@ class App extends Component {
     this.setState({inputText: event.target.value})
   }
 
+  filterItem = optionId => {
+    const {tagList} = this.state
+    const filterList = tagList.filter(tagPart => tagPart.optionId === optionId)
+    console.log(filterList)
+    this.setState({tagList: filterList})
+  }
+
   onSubmitDetails = event => {
     event.preventDefault()
     const {activeId, inputText} = this.state
     const findTag = tagsList.find(tag => tag.optionId === activeId)
     const newTask = {
+      id: uuidV4(),
       taskTitle: inputText,
       tagName: findTag.displayText,
     }
@@ -71,7 +83,7 @@ class App extends Component {
   onRenderDisplayAllTags = tagList => (
     <ul className="all-tags-list">
       {tagList.map(eachTag => (
-        <li className="each-tag-details">
+        <li className="each-tag-details" key={eachTag.id}>
           <p className="tag-title">{eachTag.taskTitle}</p>
           <button type="button" className="tag-btn">
             {eachTag.tagName}
@@ -100,7 +112,11 @@ class App extends Component {
       <h1 className="tags-heading">Tags</h1>
       <ul className="all-button">
         {tagsList.map(item => (
-          <TagItem tagDetails={item} key={item.optionId} />
+          <TagItem
+            tagDetails={item}
+            key={item.optionId}
+            filterItem={this.filterItem}
+          />
         ))}
       </ul>
       <h1 className="tasks-heading">Tasks</h1>
